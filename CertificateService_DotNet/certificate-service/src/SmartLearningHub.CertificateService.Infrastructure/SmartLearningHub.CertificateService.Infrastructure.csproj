@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>SmartLearningHub.CertificateService.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Using MySQL (Pomelo provider) to match the platform's MySQL 8 database.
+         Swap for Microsoft.EntityFrameworkCore.SqlServer + UseSqlServer(...) 
+         in DependencyInjection.cs if SQL Server is preferred instead. -->
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.13">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="QuestPDF" Version="2024.10.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmartLearningHub.CertificateService.Application\SmartLearningHub.CertificateService.Application.csproj" />
+    <ProjectReference Include="..\SmartLearningHub.CertificateService.Domain\SmartLearningHub.CertificateService.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
