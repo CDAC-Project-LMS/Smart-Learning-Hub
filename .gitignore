@@ -1,0 +1,41 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Java / Maven
+**/target/
+*.class
+
+# Node
+**/node_modules/
+**/dist/
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/.venv/
+**/venv/
+
+# .NET
+**/bin/
+**/obj/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Generated files
+**/uploads/
+**/GeneratedCertificates/
+
+# Eclipse / STS workspace
+.metadata/
