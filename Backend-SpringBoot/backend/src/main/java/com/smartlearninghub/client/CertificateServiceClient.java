@@ -39,16 +39,15 @@ public class CertificateServiceClient {
 
 
         log.info(
-                "Calling .NET Certificate Service. Student={}, Course={}",
-                request.getStudentId(),
-                request.getCourseId()
-        );
+        "Calling .NET Certificate Service. URL=/api/certificates/generate, Request={}",
+        request
+);
 
 
         try {
     CertificateGenerationResponse response =
             webClient.post()
-                    .uri("/api/certificates/generate")
+                    .uri("https://keen-tranquility-production-1305.up.railway.app/api/certificates/generate")
                     .bodyValue(request)
                     .retrieve()
                     .bodyToMono(CertificateGenerationResponse.class)
