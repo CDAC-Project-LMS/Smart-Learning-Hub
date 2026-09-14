@@ -51,7 +51,7 @@ public class CertificateServiceClient {
             CertificateGenerationResponse response =
                     webClient.post()
 
-                            .uri("/certificates/generate")
+                            .uri("/api/certificates/generate")
 
                             .bodyValue(request)
 
