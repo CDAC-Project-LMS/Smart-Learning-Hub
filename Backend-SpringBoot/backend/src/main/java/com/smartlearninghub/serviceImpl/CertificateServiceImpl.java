@@ -111,17 +111,14 @@ public class CertificateServiceImpl implements CertificateService {
             );
 
 
-        } catch (Exception e){
+        } catch (Exception e) {
 
-            log.error(
-                    "Certificate microservice call failed",
-                    e
-            );
+    log.error("Certificate microservice call failed: {}", e.getMessage(), e);
 
-            throw new BadRequestException(
-                    "Certificate service is currently unavailable"
-            );
-        }
+    throw new BadRequestException(
+            "Certificate service error: " + e.getMessage()
+    );
+}
 
 
 
