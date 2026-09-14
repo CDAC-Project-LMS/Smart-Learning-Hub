@@ -9,92 +9,85 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-
 @Component
 @Slf4j
 public class CertificateServiceClient {
 
-
     private final WebClient webClient;
-
+    private final String baseUrl;
 
     public CertificateServiceClient(
             WebClient.Builder webClientBuilder,
             @Value("${app.certificate-service.base-url}") String baseUrl) {
 
+        this.baseUrl = baseUrl;
 
-        log.info("Certificate Service URL : {}", baseUrl);
+        log.info("Certificate Service URL: {}", baseUrl);
 
-        this.webClient =
-                webClientBuilder
-                        .baseUrl(baseUrl)
-                        .build();
+        this.webClient = webClientBuilder.build();
     }
-
-
-
 
     public CertificateGenerationResponse generateCertificate(
             CertificateGenerationRequest request) {
 
+        String url = baseUrl + "/api/certificates/generate";
 
-        log.info(
-        "Calling .NET Certificate Service. URL=/api/certificates/generate, Request={}",
-        request
-);
-
+        log.info("Calling .NET Certificate Service. URL={}, Request={}",
+                url, request);
 
         try {
-    CertificateGenerationResponse response =
-            webClient.post()
-                    .uri("https://keen-tranquility-production-1305.up.railway.app/api/certificates/generate")
-                    .bodyValue(request)
-                    .retrieve()
-                    .bodyToMono(CertificateGenerationResponse.class)
-                    .block();
 
-    if (response == null) {
-        throw new BadRequestException("Empty response from certificate service");
-    }
+            CertificateGenerationResponse response =
+                    webClient.post()
+                            .uri(url)
+                            .bodyValue(request)
+                            .retrieve()
+                            .bodyToMono(CertificateGenerationResponse.class)
+                            .block();
 
-    log.info(
-            "Certificate generated successfully. Number={}",
-            response.getCertificateNumber()
-    );
+            if (response == null) {
+                throw new BadRequestException(
+                        "Empty response from certificate service");
+            }
 
-    return response;
+            log.info(
+                    "Certificate generated successfully. Number={}",
+                    response.getCertificateNumber()
+            );
 
-} catch (WebClientResponseException e) {
+            return response;
 
-    log.error(
-            "Certificate Service HTTP Error. Status={}, Body={}",
-            e.getStatusCode(),
-            e.getResponseBodyAsString()
-    );
+        } catch (WebClientResponseException e) {
 
-    throw new BadRequestException(
-            "Certificate service returned error: "
-                    + e.getStatusCode()
-                    + " - "
-                    + e.getResponseBodyAsString()
-    );
+            log.error(
+                    "Certificate Service HTTP Error. Status={}, Body={}",
+                    e.getStatusCode(),
+                    e.getResponseBodyAsString()
+            );
 
-} catch (BadRequestException e) {
+            throw new BadRequestException(
+                    "Certificate service returned error: "
+                            + e.getStatusCode()
+                            + " - "
+                            + e.getResponseBodyAsString()
+            );
 
-    throw e;
+        } catch (BadRequestException e) {
 
-} catch (Exception e) {
+            throw e;
 
-    log.error(
-            "Certificate Service Connection Failed: {}",
-            e.getMessage(),
-            e
-    );
+        } catch (Exception e) {
 
-    throw new BadRequestException(
-            "Certificate generation service is unavailable: "
-                    + e.getMessage()
-    );
-}
+            log.error(
+                    "Certificate Service Connection Failed: {}",
+                    e.getMessage(),
+                    e
+            );
+
+            throw new BadRequestException(
+                    "Certificate generation service is unavailable: "
+                            + e.getMessage()
+            );
+        }
     }
 }
