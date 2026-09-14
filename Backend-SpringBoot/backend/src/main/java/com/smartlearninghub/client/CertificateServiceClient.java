@@ -46,73 +46,56 @@ public class CertificateServiceClient {
 
 
         try {
+    CertificateGenerationResponse response =
+            webClient.post()
+                    .uri("/api/certificates/generate")
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(CertificateGenerationResponse.class)
+                    .block();
 
+    if (response == null) {
+        throw new BadRequestException("Empty response from certificate service");
+    }
 
-            CertificateGenerationResponse response =
-                    webClient.post()
+    log.info(
+            "Certificate generated successfully. Number={}",
+            response.getCertificateNumber()
+    );
 
-                            .uri("/api/certificates/generate")
+    return response;
 
-                            .bodyValue(request)
+} catch (WebClientResponseException e) {
 
-                            .retrieve()
+    log.error(
+            "Certificate Service HTTP Error. Status={}, Body={}",
+            e.getStatusCode(),
+            e.getResponseBodyAsString()
+    );
 
-                            .bodyToMono(
-                                    CertificateGenerationResponse.class
-                            )
-
-                            .block();
-
-
-
-            if(response == null){
-
-                throw new BadRequestException(
-                        "Empty response from certificate service"
-                );
-            }
-
-
-
-            log.info(
-                    "Certificate generated successfully. Number={}",
-                    response.getCertificateNumber()
-            );
-
-
-            return response;
-
-
-
-        }
-        catch(WebClientResponseException e){
-
-
-            log.error(
-                    "Certificate Service HTTP Error. Status={}, Body={}",
-                    e.getStatusCode(),
-                    e.getResponseBodyAsString()
-            );
-
-
-            throw new BadRequestException(
-                    "Certificate service returned error : "
+    throw new BadRequestException(
+            "Certificate service returned error: "
                     + e.getStatusCode()
-            );
+                    + " - "
+                    + e.getResponseBodyAsString()
+    );
 
-        }
-        catch(Exception e){
+} catch (BadRequestException e) {
 
+    throw e;
 
-            log.error(
-                    "Certificate Service Connection Failed",
-                    e
-            );
+} catch (Exception e) {
 
+    log.error(
+            "Certificate Service Connection Failed: {}",
+            e.getMessage(),
+            e
+    );
 
-            throw new BadRequestException(
-                    "Certificate generation service is unavailable"
-            );
-        }
+    throw new BadRequestException(
+            "Certificate generation service is unavailable: "
+                    + e.getMessage()
+    );
+}
     }
 }
