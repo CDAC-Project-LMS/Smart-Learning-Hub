@@ -59,13 +59,31 @@ public class CertificateServiceImpl implements CertificateService {
 
 
         // Check duplicate certificate
+      // Check if certificate already exists
+Certificate existingCertificate =
         certificateRepository
-                .findByStudentIdAndCourseId(student.getId(), courseId)
-                .ifPresent(existing -> {
-                    throw new BadRequestException(
-                            "Certificate already issued for this course"
-                    );
-                });
+                .findByStudentIdAndCourseId(
+                        student.getId(),
+                        courseId
+                )
+                .orElse(null);
+
+if (existingCertificate != null) {
+
+    log.info(
+            "Certificate already exists. Number={}",
+            existingCertificate.getCertificateNumber()
+    );
+
+    String downloadUrl =
+            "https://keen-tranquility-production-1305.up.railway.app/api/certificates/download/"
+                    + existingCertificate.getCertificateNumber();
+
+    return toResponse(
+            existingCertificate,
+            downloadUrl
+    );
+}
 
 
         // Check eligibility
@@ -158,67 +176,64 @@ public class CertificateServiceImpl implements CertificateService {
 
 
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<CertificateResponse> getMyCertificates(String studentEmail) {
+   @Override
+@Transactional(readOnly = true)
+public List<CertificateResponse> getMyCertificates(String studentEmail) {
+
+    User student =
+            userRepository.findByEmail(studentEmail)
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "User",
+                                    "email",
+                                    studentEmail
+                            ));
+
+    return certificateRepository.findAllByStudentId(student.getId())
+            .stream()
+            .map(cert ->
+                    toResponse(
+                            cert,
+                            "https://keen-tranquility-production-1305.up.railway.app/api/certificates/download/"
+                                    + cert.getCertificateNumber()
+                    ))
+            .toList();
+}
 
 
-        User student =
-                userRepository.findByEmail(studentEmail)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "User",
-                                        "email",
-                                        studentEmail
-                                ));
 
+   @Override
+@Transactional(readOnly = true)
+public CertificateResponse getCertificateForCourse(
+        String studentEmail,
+        Long courseId) {
 
-        return certificateRepository.findAllByStudentId(student.getId())
-                .stream()
-                .map(cert ->
-                toResponse(
-                        cert,
-                        "http://localhost:5000/api/certificates/download/" + cert.getCertificateNumber()
-                ))
-                .toList();
-    }
+    User student =
+            userRepository.findByEmail(studentEmail)
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "User",
+                                    "email",
+                                    studentEmail
+                            ));
 
+    Certificate certificate =
+            certificateRepository
+                    .findByStudentIdAndCourseId(
+                            student.getId(),
+                            courseId
+                    )
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "No certificate found for this course"
+                            ));
 
-
-    @Override
-    @Transactional(readOnly = true)
-    public CertificateResponse getCertificateForCourse(
-            String studentEmail,
-            Long courseId) {
-
-
-        User student =
-                userRepository.findByEmail(studentEmail)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "User",
-                                        "email",
-                                        studentEmail
-                                ));
-
-
-        Certificate certificate =
-                certificateRepository
-                        .findByStudentIdAndCourseId(
-                                student.getId(),
-                                courseId
-                        )
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "No certificate found for this course"
-                                ));
-
-
-        return toResponse(
-                certificate,
-                "http://localhost:5000/api/certificates/download/" + certificate.getCertificateNumber()
-        );
-    }
+    return toResponse(
+            certificate,
+            "https://keen-tranquility-production-1305.up.railway.app/api/certificates/download/"
+                    + certificate.getCertificateNumber()
+    );
+}
 
 
 
