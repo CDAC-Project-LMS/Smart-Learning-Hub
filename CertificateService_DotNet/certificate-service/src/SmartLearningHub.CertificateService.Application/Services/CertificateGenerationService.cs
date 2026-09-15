@@ -34,13 +34,54 @@ public class CertificateGenerationService : ICertificateGenerationService
 
     public async Task<CertificateGenerationResponse> GenerateCertificateAsync(CertificateGenerationRequest request)
     {
-        if (await _repository.ExistsAsync(request.StudentId, request.CourseId))
-        {
-            _logger.LogWarning(
-                "Duplicate certificate generation attempt for student {StudentId} / course {CourseId}",
-                request.StudentId, request.CourseId);
-            throw new DuplicateCertificateException(request.StudentId, request.CourseId);
-        }
+       var existingRecord =
+    await _repository.GetByStudentAndCourseAsync(
+        request.StudentId,
+        request.CourseId);
+
+if (existingRecord is not null)
+{
+    _logger.LogInformation(
+        "Certificate already exists: {CertificateNumber}",
+        existingRecord.CertificateNumber);
+
+    string storageDir =
+        _configuration["App:CertificateStorageDirectory"]
+        ?? "GeneratedCertificates";
+
+    string expectedPath = Path.Combine(
+        storageDir,
+        $"{existingRecord.CertificateNumber}.pdf");
+
+    // PDF is missing, so regenerate it using the existing certificate data.
+    if (!System.IO.File.Exists(expectedPath))
+    {
+        _logger.LogWarning(
+            "PDF missing for {CertificateNumber}. Regenerating...",
+            existingRecord.CertificateNumber);
+
+        string regeneratedPdfPath =
+    _pdfGenerator.GenerateCertificatePdf(existingRecord);
+
+        _logger.LogInformation(
+            "PDF regenerated at: {PdfPath}",
+            regeneratedPdfPath);
+    }
+
+    string existingBaseUrl =
+    _configuration["App:BaseUrl"]
+    ?? "http://localhost:5000";
+
+string existingDownloadUrl =
+    $"{existingBaseUrl}/api/certificates/download/{existingRecord.CertificateNumber}";
+
+    return new CertificateGenerationResponse
+    {
+        CertificateNumber = existingRecord.CertificateNumber,
+        PdfPath = expectedPath,
+        DownloadUrl = existingDownloadUrl
+    };
+}
 
         string certificateNumber = GenerateCertificateNumber();
 
